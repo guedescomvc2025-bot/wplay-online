@@ -63,62 +63,6 @@
             font-size: 1.2rem;
         }
         
-        .online-counter {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: rgba(0, 40, 0, 0.7);
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid var(--neon-green);
-            font-family: 'Orbitron', sans-serif;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .online-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
-            animation: pulse 1.5s infinite;
-        }
-        
-        .ad-section {
-            background-color: rgba(0, 20, 0, 0.8);
-            border: 1px solid var(--medium-green);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
-            text-align: center;
-        }
-        
-        .ad-title {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--neon-green);
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-        
-        .ad-container {
-            background-color: rgba(0, 30, 0, 0.5);
-            border: 1px dashed var(--medium-green);
-            border-radius: 5px;
-            padding: 15px;
-            min-height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .ad-placeholder {
-            color: var(--light-green);
-            font-style: italic;
-        }
-        
         .card {
             background-color: rgba(0, 20, 0, 0.8);
             border: 1px solid var(--medium-green);
@@ -418,12 +362,6 @@
                 font-size: 1rem;
             }
             
-            .online-counter {
-                position: static;
-                margin: 15px auto 0;
-                width: fit-content;
-            }
-            
             .stats {
                 flex-direction: column;
             }
@@ -471,11 +409,6 @@
             
             .subtitle {
                 font-size: 0.9rem;
-            }
-            
-            .online-counter {
-                font-size: 0.9rem;
-                padding: 6px 12px;
             }
             
             .card {
@@ -562,20 +495,6 @@
             .filename {
                 font-size: 0.8rem;
             }
-            
-            .ad-section {
-                padding: 15px;
-            }
-            
-            .ad-title {
-                font-size: 1.1rem;
-                margin-bottom: 10px;
-            }
-            
-            .ad-container {
-                min-height: 90px;
-                padding: 10px;
-            }
         }
     </style>
 </head>
@@ -584,18 +503,7 @@
         <header>
             <h1>WAREZ (WPLAY)</h1>
             <div class="subtitle">Scanner de Contas IPTV</div>
-            <div class="online-counter">
-                <div class="online-indicator"></div>
-                <span id="onlineCount">1</span> ONLINE
-            </div>
         </header>
-        
-        <div class="ad-section">
-            <h2 class="ad-title">PUBLICIDADE</h2>
-            <div class="ad-container" id="adContainer">
-                <div class="ad-placeholder">Seu código de propaganda será exibido aqui</div>
-            </div>
-        </div>
         
         <div class="card">
             <h2 class="card-title">CONFIGURAÇÕES</h2>
@@ -696,8 +604,6 @@
             const copyAllButtonEl = document.getElementById('copyAllButton');
             const saveButtonEl = document.getElementById('saveButton');
             const shareButtonEl = document.getElementById('shareButton');
-            const onlineCountEl = document.getElementById('onlineCount');
-            const adContainerEl = document.getElementById('adContainer');
             
             // Variáveis de estado
             let selectedServer = null;
@@ -709,137 +615,6 @@
             let startTime = 0;
             let speedInterval = null;
             let abortController = null;
-            let userId = null;
-            let onlineUsers = 1;
-            let heartbeatInterval = null;
-            let onlineCheckInterval = null;
-            
-            // Gerar ID único para este usuário
-            function generateUserId() {
-                return 'user_' + Math.random().toString(36).substr(2, 9);
-            }
-            
-            // Inicializar contador de usuários online
-            function initOnlineCounter() {
-                userId = generateUserId();
-                
-                // Registrar usuário online
-                fetch('/api/online', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ userId: userId, action: 'join' })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        onlineUsers = data.count;
-                        updateOnlineCounter();
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao registrar usuário online:', error);
-                    // Fallback para localStorage
-                    updateOnlineCounterFallback();
-                });
-                
-                // Enviar heartbeat a cada 30 segundos
-                heartbeatInterval = setInterval(() => {
-                    fetch('/api/online', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ userId: userId, action: 'heartbeat' })
-                    })
-                    .catch(error => {
-                        console.error('Erro no heartbeat:', error);
-                    });
-                }, 30000);
-                
-                // Verificar usuários online a cada 10 segundos
-                onlineCheckInterval = setInterval(() => {
-                    fetch('/api/online')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            onlineUsers = data.count;
-                            updateOnlineCounter();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao verificar usuários online:', error);
-                        // Fallback para localStorage
-                        updateOnlineCounterFallback();
-                    });
-                }, 10000);
-            }
-            
-            // Atualizar contador de usuários online
-            function updateOnlineCounter() {
-                onlineCountEl.textContent = onlineUsers;
-            }
-            
-            // Fallback para contador de usuários online usando localStorage
-            function updateOnlineCounterFallback() {
-                try {
-                    // Obter lista de usuários online do localStorage
-                    let onlineUsersList = JSON.parse(localStorage.getItem('onlineUsers') || '[]');
-                    
-                    // Verificar se o usuário atual já está na lista
-                    if (!onlineUsersList.includes(userId)) {
-                        onlineUsersList.push(userId);
-                    }
-                    
-                    // Remover usuários inativos (mais de 60 segundos)
-                    const now = Date.now();
-                    onlineUsersList = onlineUsersList.filter(id => {
-                        const lastActive = localStorage.getItem(`lastActive_${id}`);
-                        return lastActive && (now - parseInt(lastActive)) < 60000;
-                    });
-                    
-                    // Adicionar usuário atual
-                    onlineUsersList.push(userId);
-                    
-                    // Atualizar lista no localStorage
-                    localStorage.setItem('onlineUsers', JSON.stringify(onlineUsersList));
-                    
-                    // Atualizar timestamp do usuário atual
-                    localStorage.setItem(`lastActive_${userId}`, now.toString());
-                    
-                    // Atualizar contador
-                    onlineUsers = onlineUsersList.length;
-                    updateOnlineCounter();
-                } catch (error) {
-                    console.error('Erro no fallback do contador online:', error);
-                }
-            }
-            
-            // Limpar recursos ao sair
-            function cleanupOnlineCounter() {
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
-                if (onlineCheckInterval) clearInterval(onlineCheckInterval);
-                
-                // Notificar servidor que o usuário está saindo
-                if (userId) {
-                    fetch('/api/online', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ userId: userId, action: 'leave' })
-                    }).catch(error => {
-                        console.error('Erro ao notificar saída do usuário:', error);
-                    });
-                }
-            }
-            
-            // Inicializar contador de usuários online
-            initOnlineCounter();
-            
-            // Adicionar propaganda (placeholder - substitua pelo seu código real)
-            // Exemplo: adContainerEl.innerHTML = '<script>seu_codigo_de_propaganda_aqui</script>';
             
             // Inicializar lista de servidores
             servers.forEach(server => {
@@ -1302,9 +1077,6 @@ IPTV (Windows)
                     alert('Seu navegador não suporta a API de compartilhamento.');
                 }
             });
-            
-            // Limpar recursos ao fechar a página
-            window.addEventListener('beforeunload', cleanupOnlineCounter);
         });
     </script>
 </body>
