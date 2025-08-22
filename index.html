@@ -63,6 +63,55 @@
             font-size: 1.2rem;
         }
         
+        .online-counter {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: var(--light-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .ad-container {
+            margin: 20px 0;
+            text-align: center;
+            min-height: 100px;
+            background-color: rgba(0, 50, 0, 0.3);
+            border: 1px dashed var(--medium-green);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light-green);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .notification.error {
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+        }
+        
+        .notification.success {
+            background-color: rgba(0, 255, 0, 0.8);
+            color: black;
+        }
+        
+        .notification.warning {
+            background-color: rgba(255, 165, 0, 0.8);
+            color: black;
+        }
+        
         .card {
             background-color: rgba(0, 20, 0, 0.8);
             border: 1px solid var(--medium-green);
@@ -503,7 +552,15 @@
         <header>
             <h1>WAREZ (WPLAY)</h1>
             <div class="subtitle">Scanner de Contas IPTV</div>
+            <div class="online-counter">
+                <span class="status-indicator status-active pulse"></span>
+                <span id="onlineCount">0</span> usuários online
+            </div>
         </header>
+        
+        <div class="ad-container" id="adContainer">
+            <!-- Área para propaganda - insira seu código aqui -->
+        </div>
         
         <div class="card">
             <h2 class="card-title">CONFIGURAÇÕES</h2>
@@ -604,6 +661,8 @@
             const copyAllButtonEl = document.getElementById('copyAllButton');
             const saveButtonEl = document.getElementById('saveButton');
             const shareButtonEl = document.getElementById('shareButton');
+            const onlineCountEl = document.getElementById('onlineCount');
+            const adContainerEl = document.getElementById('adContainer');
             
             // Variáveis de estado
             let selectedServer = null;
@@ -615,6 +674,24 @@
             let startTime = 0;
             let speedInterval = null;
             let abortController = null;
+            let onlineUsers = 0;
+            let lastActivity = Date.now();
+            let proxyAvailable = true;
+            
+            // Função para exibir notificações
+            function showNotification(message, type = 'error') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                // Remover a notificação após 5 segundos
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 5000);
+            }
             
             // Inicializar lista de servidores
             servers.forEach(server => {
@@ -633,6 +710,81 @@
                 
                 serverListEl.appendChild(serverItem);
             });
+            
+            // Função para carregar propaganda
+            function loadAd() {
+                // Insira seu código de propaganda aqui
+                // Exemplo:
+                // adContainerEl.innerHTML = `
+                //     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+                //          crossorigin="anonymous"></script>
+                //     <ins class="adsbygoogle"
+                //          style="display:block"
+                //          data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                //          data-ad-slot="XXXXXXXXXX"
+                //          data-ad-format="auto"></ins>
+                //     <script>
+                //          (adsbygoogle = window.adsbygoogle || []).push({});
+                //     </script>
+                // `;
+                
+                // Placeholder - substitua pelo seu código real
+                adContainerEl.innerHTML = '<div>Área para propaganda - insira seu código no script</div>';
+            }
+            
+            // Função para atualizar contador de usuários online
+            function updateOnlineCount() {
+                // Simulação de usuários online - substitua por sua lógica real
+                // Em produção, você pode usar WebSockets, Server-Sent Events ou chamadas de API
+                
+                // Simulação simples com base na atividade
+                const now = Date.now();
+                const inactiveTime = now - lastActivity;
+                
+                if (inactiveTime > 60000) { // Se inativo por mais de 1 minuto
+                    onlineUsers = Math.max(1, Math.floor(Math.random() * 10) + 1); // Mantém pelo menos 1
+                } else {
+                    onlineUsers = Math.max(1, onlineUsers + Math.floor(Math.random() * 3) - 1); // Variação aleatória
+                }
+                
+                onlineCountEl.textContent = onlineUsers;
+                
+                // Atualizar a cada 30 segundos
+                setTimeout(updateOnlineCount, 30000);
+            }
+            
+            // Detectar atividade do usuário
+            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+                document.addEventListener(event, () => {
+                    lastActivity = Date.now();
+                }, true);
+            });
+            
+            // Verificar se o proxy está disponível
+            async function checkProxyStatus() {
+                try {
+                    const response = await fetch('/api/proxy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ url: 'https://httpbin.org/get' })
+                    });
+                    
+                    if (response.ok) {
+                        proxyAvailable = true;
+                        console.log('Proxy está funcionando corretamente');
+                    } else {
+                        proxyAvailable = false;
+                        console.error('Proxy retornou status:', response.status);
+                        showNotification('Atenção: O proxy pode não estar funcionando corretamente. O scanner pode não funcionar como esperado.', 'warning');
+                    }
+                } catch (error) {
+                    proxyAvailable = false;
+                    console.error('Erro ao verificar proxy:', error);
+                    showNotification('Atenção: Não foi possível conectar ao proxy. O scanner pode não funcionar como esperado.', 'warning');
+                }
+            }
             
             // Manipulador de arquivo de combos
             comboFileEl.addEventListener('change', function(e) {
@@ -660,12 +812,17 @@
             // Iniciar scan
             startButtonEl.addEventListener('click', async function() {
                 if (!selectedServer) {
-                    alert('Selecione um servidor primeiro!');
+                    showNotification('Selecione um servidor primeiro!');
                     return;
                 }
                 
                 if (combos.length === 0) {
-                    alert('Carregue um arquivo de combos primeiro!');
+                    showNotification('Carregue um arquivo de combos primeiro!');
+                    return;
+                }
+                
+                if (!proxyAvailable) {
+                    showNotification('O proxy não está disponível. O scanner não pode funcionar sem ele.', 'error');
                     return;
                 }
                 
@@ -707,6 +864,7 @@
                 } catch (error) {
                     if (error.name !== 'AbortError') {
                         console.error('Erro durante o scan:', error);
+                        showNotification(`Erro durante o scan: ${error.message}`, 'error');
                     }
                 }
                 
@@ -766,11 +924,12 @@
                 const targetUrl = `${host}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
                 
                 try {
-                    const timeout = setTimeout(() => {
-                        if (signal) signal.onabort();
-                    }, 10000);
+                    // Timeout de 15 segundos
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Timeout da requisição')), 15000);
+                    });
                     
-                    const response = await fetch(proxyUrl, {
+                    const fetchPromise = fetch(proxyUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -779,13 +938,18 @@
                         signal: signal
                     });
                     
-                    clearTimeout(timeout);
+                    const response = await Promise.race([fetchPromise, timeoutPromise]);
                     
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
                     const data = await response.json();
+                    
+                    // Verificar se a resposta tem a estrutura esperada
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
                     
                     if (data.user_info && data.user_info.status === 'Active') {
                         let expirationDate = 'Desconhecida';
@@ -972,7 +1136,7 @@ IPTV (Windows)
             // Copiar todos os resultados
             copyAllButtonEl.addEventListener('click', function() {
                 if (results.length === 0) {
-                    alert('Nenhum resultado válido para copiar!');
+                    showNotification('Nenhum resultado válido para copiar!');
                     return;
                 }
                 
@@ -1036,7 +1200,7 @@ IPTV (Windows)
             // Salvar resultados em arquivo
             saveButtonEl.addEventListener('click', function() {
                 if (results.length === 0) {
-                    alert('Nenhum resultado válido para salvar!');
+                    showNotification('Nenhum resultado válido para salvar!');
                     return;
                 }
                 
@@ -1059,7 +1223,7 @@ IPTV (Windows)
             // Compartilhar resultados
             shareButtonEl.addEventListener('click', function() {
                 if (results.length === 0) {
-                    alert('Nenhum resultado válido para compartilhar!');
+                    showNotification('Nenhum resultado válido para compartilhar!');
                     return;
                 }
                 
@@ -1074,9 +1238,14 @@ IPTV (Windows)
                         text: text
                     }).catch(console.error);
                 } else {
-                    alert('Seu navegador não suporta a API de compartilhamento.');
+                    showNotification('Seu navegador não suporta a API de compartilhamento.');
                 }
             });
+            
+            // Inicializar funcionalidades
+            loadAd();
+            updateOnlineCount();
+            checkProxyStatus();
         });
     </script>
 </body>
