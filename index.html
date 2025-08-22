@@ -63,29 +63,6 @@
             font-size: 1.2rem;
         }
         
-        .online-counter {
-            margin-top: 15px;
-            font-size: 1rem;
-            color: var(--light-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .ad-container {
-            margin: 20px 0;
-            text-align: center;
-            min-height: 100px;
-            background-color: rgba(0, 50, 0, 0.3);
-            border: 1px dashed var(--medium-green);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--light-green);
-        }
-        
         .card {
             background-color: rgba(0, 20, 0, 0.8);
             border: 1px solid var(--medium-green);
@@ -526,15 +503,7 @@
         <header>
             <h1>WAREZ (WPLAY)</h1>
             <div class="subtitle">Scanner de Contas IPTV</div>
-            <div class="online-counter">
-                <span class="status-indicator status-active pulse"></span>
-                <span id="onlineCount">0</span> usuários online
-            </div>
         </header>
-        
-        <div class="ad-container" id="adContainer">
-            <!-- Área para propaganda - insira seu código aqui -->
-        </div>
         
         <div class="card">
             <h2 class="card-title">CONFIGURAÇÕES</h2>
@@ -635,8 +604,6 @@
             const copyAllButtonEl = document.getElementById('copyAllButton');
             const saveButtonEl = document.getElementById('saveButton');
             const shareButtonEl = document.getElementById('shareButton');
-            const onlineCountEl = document.getElementById('onlineCount');
-            const adContainerEl = document.getElementById('adContainer');
             
             // Variáveis de estado
             let selectedServer = null;
@@ -648,8 +615,6 @@
             let startTime = 0;
             let speedInterval = null;
             let abortController = null;
-            let onlineUsers = 0;
-            let lastActivity = Date.now();
             
             // Inicializar lista de servidores
             servers.forEach(server => {
@@ -667,55 +632,6 @@
                 });
                 
                 serverListEl.appendChild(serverItem);
-            });
-            
-            // Função para carregar propaganda
-            function loadAd() {
-                // Insira seu código de propaganda aqui
-                // Exemplo:
-                // adContainerEl.innerHTML = `
-                //     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
-                //          crossorigin="anonymous"></script>
-                //     <ins class="adsbygoogle"
-                //          style="display:block"
-                //          data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-                //          data-ad-slot="XXXXXXXXXX"
-                //          data-ad-format="auto"></ins>
-                //     <script>
-                //          (adsbygoogle = window.adsbygoogle || []).push({});
-                //     </script>
-                // `;
-                
-                // Placeholder - substitua pelo seu código real
-                adContainerEl.innerHTML = '<div>Área para propaganda - insira seu código no script</div>';
-            }
-            
-            // Função para atualizar contador de usuários online
-            function updateOnlineCount() {
-                // Simulação de usuários online - substitua por sua lógica real
-                // Em produção, você pode usar WebSockets, Server-Sent Events ou chamadas de API
-                
-                // Simulação simples com base na atividade
-                const now = Date.now();
-                const inactiveTime = now - lastActivity;
-                
-                if (inactiveTime > 60000) { // Se inativo por mais de 1 minuto
-                    onlineUsers = Math.max(1, Math.floor(Math.random() * 10) + 1); // Mantém pelo menos 1
-                } else {
-                    onlineUsers = Math.max(1, onlineUsers + Math.floor(Math.random() * 3) - 1); // Variação aleatória
-                }
-                
-                onlineCountEl.textContent = onlineUsers;
-                
-                // Atualizar a cada 30 segundos
-                setTimeout(updateOnlineCount, 30000);
-            }
-            
-            // Detectar atividade do usuário
-            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
-                document.addEventListener(event, () => {
-                    lastActivity = Date.now();
-                }, true);
             });
             
             // Manipulador de arquivo de combos
@@ -1161,10 +1077,6 @@ IPTV (Windows)
                     alert('Seu navegador não suporta a API de compartilhamento.');
                 }
             });
-            
-            // Inicializar funcionalidades
-            loadAd();
-            updateOnlineCount();
         });
     </script>
 </body>
